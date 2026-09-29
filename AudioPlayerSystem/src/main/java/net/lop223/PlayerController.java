@@ -1,6 +1,10 @@
 package net.lop223;
 
 import net.lop223.utils.AudioDevice;
+import net.lop223.utils.IPlaybackQueueService;
+import net.lop223.utils.player_engine.IAudioDeviceManager;
+import net.lop223.utils.player_engine.IAudioPlaybackControl;
+import net.lop223.utils.player_engine.IAudioVolumeControl;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
 import net.lop223.utils.IMetadataReader;
 import net.lop223.utils.IPlaylistRepository;
@@ -10,18 +14,23 @@ import net.lop223.utils.IPlaylistRepository;
  * Приймає запити від UI або консольного інтерфейсу та координує роботу підсистем.
  */
 public class PlayerController {
-    private final PlaybackQueueService queueService;
-    private final IMediaPlayerEngine audioEngine;
+    // [DIP]: Усі залежності є виключно інтерфейсами
+    private final IPlaybackQueueService queueService;
+    private final IAudioPlaybackControl playbackControl;
+    private final IAudioVolumeControl volumeControl;
+    private final IAudioDeviceManager deviceManager;
     private final IMetadataReader metadataReader;
     private final IPlaylistRepository playlistRepository;
 
     public PlayerController(
-            PlaybackQueueService queueService,
+            IPlaybackQueueService queueService,
             IMediaPlayerEngine audioEngine,
             IMetadataReader metadataReader,
             IPlaylistRepository playlistRepository) {
         this.queueService = queueService;
-        this.audioEngine = audioEngine;
+        this.playbackControl = audioEngine;
+        this.volumeControl = audioEngine;
+        this.deviceManager = audioEngine;
         this.metadataReader = metadataReader;
         this.playlistRepository = playlistRepository;
     }
@@ -39,7 +48,7 @@ public class PlayerController {
 
     public void onPauseClicked() {
         System.out.println("\n[UI Event] Tap button [ Pause ]");
-        audioEngine.pause();
+        playbackControl.pause();
     }
 
     public void onNextClicked() {
@@ -49,12 +58,12 @@ public class PlayerController {
 
     public void onVolumeChanged(float volume) {
         System.out.println("\n[UI Event] Change volume tracker: " + (int)(volume * 100) + "%");
-        audioEngine.setVolume(volume);
+        volumeControl.setVolume(volume);
     }
 
     public void onDeviceSelected(AudioDevice device) {
         System.out.println("\n[UI Event] Choice audio device: " + device.name());
-        audioEngine.setOutputDevice(device);
+        deviceManager.setOutputDevice(device);
     }
 
     public Track importFileToPlaylist(String filePath, Playlist playlist) {
