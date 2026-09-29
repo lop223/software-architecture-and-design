@@ -1,7 +1,7 @@
 package net.lop223;
 
 import net.lop223.utils.AudioDevice;
-import net.lop223.utils.IMediaPlayerEngine;
+import net.lop223.utils.player_engine.IMediaPlayerEngine;
 import net.lop223.utils.IMetadataReader;
 import net.lop223.utils.IPlaylistRepository;
 
