@@ -1,0 +1,50 @@
+package net.lop223;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * [GRASP: Information Expert, Creator]
+ * Список відтворення. Керує треками та обчислює сукупні властивості.
+ */
+public class Playlist {
+    private final String id;
+    private String name;
+    private final List<Track> tracks = new ArrayList<>();
+
+    public Playlist(String id, String name) {
+        this.id = Objects.requireNonNull(id);
+        this.name = Objects.requireNonNull(name);
+    }
+
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Track> getTracks() { return Collections.unmodifiableList(tracks); }
+
+    public void addTrack(Track track) {
+        System.out.println("[STUB] Playlist.addTrack() -> Added track: '" + track.getTitle() + "' to playlist '" + name + "'");
+        tracks.add(track);
+    }
+
+    public void removeTrack(String trackId) {
+        System.out.println("[STUB] Playlist.removeTrack() -> removed track with ID: " + trackId);
+        tracks.removeIf(t -> t.getId().equals(trackId));
+    }
+
+    /**
+     * [GRASP: Information Expert]
+     * Тільки Playlist володіє списком своїх треків, тому він обчислює загальний час звучання.
+     */
+    public Duration calculateTotalDuration() {
+        System.out.println("[STUB] Playlist.calculateTotalDuration() -> Підрахунок тривалості плейлиста '" + name + "'");
+        Duration total = Duration.ZERO;
+        for (Track track : tracks) {
+            total = total.plus(track.getDuration());
+        }
+        return total;
+    }
+}
