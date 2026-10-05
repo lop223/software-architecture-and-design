@@ -69,7 +69,7 @@ public class TrackBuilder {
         return this;
     }
 
-    public TrackBuilder withBitrate(int bitrateKbps) {
+    public TrackBuilder bitrate(int bitrateKbps) {
         this.bitrateKbps = bitrateKbps;
         return this;
     }

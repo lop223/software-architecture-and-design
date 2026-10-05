@@ -1,5 +1,7 @@
 package net.lop223;
 
+import net.lop223.stream_connection.AudioConnectionPool;
+import net.lop223.stream_connection.AudioStreamConnection;
 import net.lop223.utils.AudioDevice;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
 import net.lop223.utils.PlaybackState;
@@ -17,8 +19,15 @@ public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
     private AudioDevice currentDevice;
     private String loadedSourcePath;
 
+    // Інтеграція з пулом об'єктів
+    private final AudioConnectionPool connectionPool = new AudioConnectionPool(2);
+    private AudioStreamConnection currentConnection;
+
     public SystemMediaPlayerEngine() {
         this.currentDevice = new AudioDevice("dev_default", "Вбудовані динаміки", true);
+
+        AudioPlayerConfig config = AudioPlayerConfig.getInstance();
+        System.out.println("[SystemAudioEngine] Config applied: Buffer size = " + config.getBufferSize() + " bytes");
     }
 
     @Override
@@ -54,17 +63,24 @@ public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
     @Override
     public void loadSource(String sourcePath) {
         this.loadedSourcePath = sourcePath;
-        System.out.println("[STUB] AudioEngine.loadSource() -> File loaded into the buffer: " + sourcePath);
+
+        if (currentConnection != null) {
+            connectionPool.release(currentConnection);
+        }
+
+        this.currentConnection = connectionPool.acquire();
+        this.currentConnection.bindStream(sourcePath);
+        System.out.println("[AudioEngine] File ready for playback via " + currentConnection.getConnectionId());
     }
 
     @Override
     public void play() {
         if (loadedSourcePath == null) {
-            System.out.println("[AudioEngine WARN] No audio file selected for startup.!");
+            System.out.println("[AudioEngine WARN] No source loaded!");
             return;
         }
         this.state = PlaybackState.PLAYING;
-        System.out.println("[STUB] AudioEngine.play() -> PLAYBACK via '" + currentDevice.name() + "'");
+        System.out.println("[AudioEngine] PLAYING on '" + currentDevice.name() + "' [Stream: " + currentConnection.getConnectionId() + "]");
     }
 
     @Override
@@ -76,7 +92,11 @@ public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
     @Override
     public void stop() {
         this.state = PlaybackState.STOPPED;
-        System.out.println("[STUB] AudioEngine.stop() -> STOPPED");
+        if (currentConnection != null) {
+            connectionPool.release(currentConnection);
+            currentConnection = null;
+        }
+        System.out.println("[AudioEngine] STOPPED (Connection released back to pool)");
     }
 
     @Override

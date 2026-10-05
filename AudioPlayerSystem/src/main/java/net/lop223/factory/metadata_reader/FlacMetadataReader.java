@@ -1,6 +1,7 @@
 package net.lop223.factory.metadata_reader;
 
 import net.lop223.Track;
+import net.lop223.builder.TrackBuilder;
 import net.lop223.utils.IMetadataReader;
 
 import java.time.Duration;
@@ -14,7 +15,15 @@ public class FlacMetadataReader implements IMetadataReader
         Random random = new Random();
         System.out.println("[Factory Method -> FLAC Reader] Reading Vorbis comments & Hi-Res audio: " + filePath);
         String name = extractFileName(filePath);
-        return new Track(UUID.randomUUID().toString(), name, "FLAC Artist", "FLAC Album", Duration.ofSeconds(random.nextInt(180, 290)), filePath);
+        return new TrackBuilder()
+                .title(name)
+                .artist("Flac Artist")
+                .album("Flac Album")
+                .genre("Flac Genre")
+                .bitrate(320)
+                .durationsSeconds(215)
+                .sourcePath(filePath)
+                .build();
     }
 
     private String extractFileName(String path) {

@@ -21,7 +21,7 @@ public class AudioConnectionPool {
         }
     }
 
-    public AudioStreamConnection acquireConnection() {
+    public AudioStreamConnection acquire() {
         AudioStreamConnection connection = availableConnections.poll();
         if (connection == null) {
             System.out.println("[AudioConnectionPool WARN] Усі з'єднання зайняті! Очікування вивільнення...");
@@ -30,7 +30,7 @@ public class AudioConnectionPool {
         return connection;
     }
 
-    public void releaseConnection(AudioStreamConnection connection) {
+    public void release(AudioStreamConnection connection) {
         if (connection != null) {
             connection.reset();
             availableConnections.offer(connection);
