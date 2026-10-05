@@ -16,19 +16,23 @@ public class Track implements Prototype<Track> {
     private final String album;
     private final Duration duration;
     private final String sourcePath;
+    private final String genre;
+    private final int bitrateKbps;
 
-    public Track(String id, String title, String artist, String album, Duration duration, String sourcePath) {
+    public Track(String id, String title, String artist, String album, Duration duration, String sourcePath, String genre, int bitrateKbps) {
         this.id = Objects.requireNonNull(id);
         this.title = Objects.requireNonNull(title);
         this.artist = Objects.requireNonNull(artist);
         this.album = Objects.requireNonNull(album);
         this.duration = Objects.requireNonNull(duration);
         this.sourcePath = Objects.requireNonNull(sourcePath);
+        this.genre = Objects.requireNonNull(genre);
+        this.bitrateKbps = bitrateKbps;
     }
 
     @Override
     public Track clone() {
-        return new Track(id + "_copy", title, artist, album, duration, sourcePath);
+        return new Track(id + "_copy", title, artist, album, duration, sourcePath, genre, bitrateKbps);
     }
 
     public String getId() { return id; }
@@ -37,6 +41,8 @@ public class Track implements Prototype<Track> {
     public String getAlbum() { return album; }
     public Duration getDuration() { return duration; }
     public String getSourcePath() { return sourcePath; }
+    public String getGenre() { return genre; }
+    public int getBitrateKbps() { return bitrateKbps; }
 
     /**
      * [GRASP: Information Expert]
@@ -45,7 +51,7 @@ public class Track implements Prototype<Track> {
     public String getFormattedDetails() {
         long minutes = duration.toMinutes();
         long seconds = duration.minusMinutes(minutes).getSeconds();
-        return String.format("%s - %s [%02d:%02d] (Album: %s)", artist, title, minutes, seconds, album);
+        return String.format("%s - %s [%02d:%02d] (Album: %s)", artist, title, minutes, seconds, album, genre, bitrateKbps);
     }
 
     @Override
