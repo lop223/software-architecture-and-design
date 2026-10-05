@@ -1,16 +1,15 @@
 package net.lop223;
 
+import net.lop223.utils.prototype.Prototype;
+
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * [GRASP: Information Expert, Creator]
  * Список відтворення. Керує треками та обчислює сукупні властивості.
  */
-public class Playlist {
+public class Playlist implements Prototype<Playlist> {
     private final String id;
     private String name;
     private final List<Track> tracks = new ArrayList<>();
@@ -18,6 +17,13 @@ public class Playlist {
     public Playlist(String id, String name) {
         this.id = Objects.requireNonNull(id);
         this.name = Objects.requireNonNull(name);
+    }
+
+    @Override
+    public Playlist clone() {
+        Playlist clone = new Playlist(UUID.randomUUID().toString(), name + " (Copy)");
+        clone.tracks.addAll(tracks);
+        return clone;
     }
 
     public String getId() { return id; }

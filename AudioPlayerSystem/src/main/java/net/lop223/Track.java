@@ -1,5 +1,7 @@
 package net.lop223;
 
+import net.lop223.utils.prototype.Prototype;
+
 import java.time.Duration;
 import java.util.Objects;
 
@@ -7,7 +9,7 @@ import java.util.Objects;
  * [GRASP: Information Expert, High Cohesion]
  * Представляє аудіотрек у системі. Зберігає лише метадані та шлях до файлу.
  */
-public class Track {
+public class Track implements Prototype<Track> {
     private final String id;
     private final String title;
     private final String artist;
@@ -22,6 +24,11 @@ public class Track {
         this.album = Objects.requireNonNull(album);
         this.duration = Objects.requireNonNull(duration);
         this.sourcePath = Objects.requireNonNull(sourcePath);
+    }
+
+    @Override
+    public Track clone() {
+        return new Track(id + "_copy", title, artist, album, duration, sourcePath);
     }
 
     public String getId() { return id; }
