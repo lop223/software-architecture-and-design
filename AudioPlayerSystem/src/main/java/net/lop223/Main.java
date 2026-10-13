@@ -1,10 +1,14 @@
 package net.lop223;
 
+import net.lop223.adapter.NativeAudioServiceAdapter;
+import net.lop223.adapter.WindowsNativeAudioService;
 import net.lop223.builder.TrackBuilder;
+import net.lop223.decorator.VolumeLimitMediaPlayerDecorator;
 import net.lop223.factory.audio_platform.AudioPlatformFactory;
 import net.lop223.factory.audio_platform.WindowsAudioPlatformFactory;
 import net.lop223.factory.metadata_reader.AudioMetadataReaderFactory;
 import net.lop223.factory.metadata_reader.FlacMetadataReaderFactory;
+import net.lop223.proxy.LazyMediaPlayerEngineProxy;
 import net.lop223.utils.AudioDevice;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
 import net.lop223.utils.IMetadataReader;
@@ -16,7 +20,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         System.out.println("===================================================================");
-        System.out.println("     ІНТЕГРОВАНА СИСТЕМА АУДІОПЛЕЄРА (6 CREATIONAL PATTERNS)       ");
+        System.out.println("     ІНТЕГРОВАНА СИСТЕМА АУДІОПЛЕЄРА (12 DESIGN PATTERNS)          ");
         System.out.println("===================================================================\n");
 
         // 1. Singleton: Налаштування плеєра
@@ -28,7 +32,14 @@ public class Main {
         // 2. Abstract Factory: Ініціалізація екосистеми платформи
         System.out.println("2. [Abstract Factory] Ініціалізація компонентів для ОС Windows:");
         AudioPlatformFactory platformFactory = new WindowsAudioPlatformFactory();
-        IMediaPlayerEngine audioEngine = platformFactory.createMediaPlayerEngine();
+
+        // [Proxy + Decorator + Bridge + Adapter] Backend and engine are created on first use;
+        // the decorator then enforces the configured volume limit.
+        IMediaPlayerEngine audioEngine = new VolumeLimitMediaPlayerDecorator(
+                new LazyMediaPlayerEngineProxy(() ->
+                        new SystemMediaPlayerEngine(
+                                new NativeAudioServiceAdapter(new WindowsNativeAudioService()))),
+                config.getMaxVolumeLimit());
         IMetadataReader defaultMetadataReader = platformFactory.createMetadataReader();
 
         IPlaylistRepository repository = new InMemoryPlaylistRepository();
@@ -41,7 +52,10 @@ public class Main {
 
         // 4. Factory Method: Зчитування MP3 та FLAC треків
         System.out.println("\n3. [Factory Method] Імпорт файлів за допомогою фабричних зчитувачів:");
-        controller.importFileToPlaylist("C:/Music/ACDC_Highway_To_Hell.mp3", rockPlaylist);
+        Track firstMp3Track = controller.importFileToPlaylist("C:/Music/ACDC_Highway_To_Hell.mp3", rockPlaylist);
+        Track secondMp3Track = controller.importFileToPlaylist("C:/Music/ACDC_Back_In_Black.mp3", rockPlaylist);
+        System.out.println("   [Flyweight] MP3 tracks share their immutable artist/album/genre metadata: "
+                + (firstMp3Track.getMetadata() == secondMp3Track.getMetadata()));
 
         AudioMetadataReaderFactory flacFactory = new FlacMetadataReaderFactory();
         IMetadataReader flacReader = flacFactory.createReader();
@@ -68,8 +82,18 @@ public class Main {
         System.out.printf("   Оригінальний плейліст: '%s' (Треків: %d)\n", rockPlaylist.getName(), rockPlaylist.getTracks().size());
         System.out.printf("   Клонований плейліст:   '%s' (Треків: %d)\n", workoutPlaylist.getName(), workoutPlaylist.getTracks().size());
 
-        // 7. Відтворення та робота Object Pool у рушії
-        System.out.println("\n6. [Object Pool] Відтворення плейліста через аудіорушій (Pool з'єднань):");
+        // 7. Composite: playlist folders and nested folders expose the same aggregate operations.
+        System.out.println("\n6. [Composite] Групування плейлистів у бібліотеці:");
+        PlaylistFolder favorites = new PlaylistFolder("Favorites");
+        PlaylistFolder library = new PlaylistFolder("Music Library");
+        favorites.add(rockPlaylist);
+        library.add(favorites);
+        library.add(workoutPlaylist);
+        System.out.printf("   Плейлистів/папок у бібліотеці: %d, треків у дереві: %d, загальна тривалість: %s\n",
+                library.getItems().size(), library.getTracks().size(), library.calculateTotalDuration());
+
+        // 8. Відтворення та робота Object Pool у рушії
+        System.out.println("\n7. [Object Pool] Відтворення плейліста через аудіорушій (Pool з'єднань):");
         controller.onSelectPlaylist(rockPlaylist);
         controller.onPlayClicked();   // Відтворює 1-й трек (захоплює Conn_#1)
         controller.onNextClicked();   // Перемикає на 2-й трек (перевикористовує підключення)
@@ -81,7 +105,7 @@ public class Main {
                 .orElse(audioEngine.getCurrentDevice());
 
         controller.onDeviceSelected(bluetooth);
-        controller.onVolumeChanged(0.75f);
+        controller.onVolumeChanged(0.95f);
         controller.onPauseClicked();
 
         System.out.println("\n===================================================================");

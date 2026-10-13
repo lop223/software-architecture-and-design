@@ -9,7 +9,7 @@ import java.util.*;
  * [GRASP: Information Expert, Creator]
  * Список відтворення. Керує треками та обчислює сукупні властивості.
  */
-public class Playlist implements Prototype<Playlist> {
+public class Playlist implements Prototype<Playlist>, PlaylistLibraryItem {
     private final String id;
     private String name;
     private final List<Track> tracks = new ArrayList<>();
@@ -45,6 +45,7 @@ public class Playlist implements Prototype<Playlist> {
      * [GRASP: Information Expert]
      * Тільки Playlist володіє списком своїх треків, тому він обчислює загальний час звучання.
      */
+    @Override
     public Duration calculateTotalDuration() {
         System.out.println("[STUB] Playlist.calculateTotalDuration() -> Підрахунок тривалості плейлиста '" + name + "'");
         Duration total = Duration.ZERO;

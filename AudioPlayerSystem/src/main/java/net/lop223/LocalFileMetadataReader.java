@@ -20,7 +20,9 @@ public class LocalFileMetadataReader implements IMetadataReader {
                 "Artist (Auto-detected)",
                 "Single / Album",
                 Duration.ofSeconds(215),
-                filePath
+                filePath,
+                "Unknown",
+                320
         );
         return track;
     }
