@@ -3,11 +3,16 @@ package net.lop223;
 import net.lop223.adapter.NativeAudioServiceAdapter;
 import net.lop223.adapter.WindowsNativeAudioService;
 import net.lop223.builder.TrackBuilder;
+import net.lop223.command.CommandInvoker;
 import net.lop223.decorator.VolumeLimitMediaPlayerDecorator;
 import net.lop223.factory.audio_platform.AudioPlatformFactory;
 import net.lop223.factory.audio_platform.WindowsAudioPlatformFactory;
 import net.lop223.factory.metadata_reader.AudioMetadataReaderFactory;
 import net.lop223.factory.metadata_reader.FlacMetadataReaderFactory;
+import net.lop223.importer.AudioFormatHandler;
+import net.lop223.importer.AudioImportHandler;
+import net.lop223.importer.UnsupportedAudioFormatHandler;
+import net.lop223.mediator.PlaybackMediator;
 import net.lop223.proxy.LazyMediaPlayerEngineProxy;
 import net.lop223.utils.AudioDevice;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
@@ -44,11 +49,38 @@ public class Main {
 
         IPlaylistRepository repository = new InMemoryPlaylistRepository();
         PlaybackQueueService queueService = new PlaybackQueueService(audioEngine);
-        PlayerController controller = new PlayerController(queueService, audioEngine, defaultMetadataReader, repository);
+
+        AudioMetadataReaderFactory flacFactory = new FlacMetadataReaderFactory();
+
+        AudioImportHandler importHandler = new AudioFormatHandler(
+                ".mp3",
+                platformFactory.createMetadataReader(),
+                new AudioFormatHandler(
+                        ".flac",
+                        flacFactory.createReader(),
+                        new UnsupportedAudioFormatHandler()));
+
+        CommandInvoker commandInvoker = new CommandInvoker();
+        PlaybackMediator playbackMediator = new PlaybackMediator(
+                queueService,
+                audioEngine,
+                audioEngine,
+                audioEngine,
+                repository,
+                commandInvoker
+        );
+        PlayerController controller =
+                new PlayerController(playbackMediator, importHandler);
 
         // 3. Створення користувача та плейліста
         User user = new User("usr_101", "Maks");
         Playlist rockPlaylist = user.createPlaylist("Rock Classics");
+
+        Track mp3Track = controller.importFileToPlaylist(
+                "C:/Music/ACDC_Highway_To_Hell.mp3", rockPlaylist);
+
+        Track flacTrack = controller.importFileToPlaylist(
+                "C:/Music/Nirvana_Smells_Like_Teen_Spirit.flac", rockPlaylist);
 
         // 4. Factory Method: Зчитування MP3 та FLAC треків
         System.out.println("\n3. [Factory Method] Імпорт файлів за допомогою фабричних зчитувачів:");
@@ -57,9 +89,6 @@ public class Main {
         System.out.println("   [Flyweight] MP3 tracks share their immutable artist/album/genre metadata: "
                 + (firstMp3Track.getMetadata() == secondMp3Track.getMetadata()));
 
-        AudioMetadataReaderFactory flacFactory = new FlacMetadataReaderFactory();
-        IMetadataReader flacReader = flacFactory.createReader();
-        Track flacTrack = flacReader.readTrackFromFile("C:/Music/Nirvana_Smells_Like_Teen_Spirit.flac");
         rockPlaylist.addTrack(flacTrack);
 
         // 5. Builder: Ручне створення складного треку
@@ -74,6 +103,11 @@ public class Main {
                 .sourcePath("D:/Music/Pink_Floyd_Comfortably_Numb.flac")
                 .build();
         rockPlaylist.addTrack(customTrack);
+
+        System.out.println("Треки плейліста '" + rockPlaylist.getName() + "':");
+        for (Track track : rockPlaylist) {
+            System.out.println(" - " + track.getFormattedDetails());
+        }
 
         // 6. Prototype: Клонування плейліста (глибока копія)
         System.out.println("\n5. [Prototype] Клонування плейліста:");

@@ -9,7 +9,7 @@ import java.util.*;
  * [GRASP: Information Expert, Creator]
  * Список відтворення. Керує треками та обчислює сукупні властивості.
  */
-public class Playlist implements Prototype<Playlist>, PlaylistLibraryItem {
+public class Playlist implements Prototype<Playlist>, PlaylistLibraryItem, Iterable<Track> {
     private final String id;
     private String name;
     private final List<Track> tracks = new ArrayList<>();
@@ -24,6 +24,11 @@ public class Playlist implements Prototype<Playlist>, PlaylistLibraryItem {
         Playlist clone = new Playlist(UUID.randomUUID().toString(), name + " (Copy)");
         clone.tracks.addAll(tracks);
         return clone;
+    }
+
+    @Override
+    public Iterator<Track> iterator() {
+        return Collections.unmodifiableList(tracks).iterator();
     }
 
     public String getId() { return id; }
