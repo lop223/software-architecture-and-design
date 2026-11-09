@@ -1,11 +1,14 @@
 package net.lop223;
 
+import net.lop223.memento.PlaybackMemento;
 import net.lop223.utils.IPlaybackQueueService;
+import net.lop223.utils.PlaybackState;
 import net.lop223.utils.navigation.QueueNavigationStrategy;
 import net.lop223.utils.navigation.SequentialNavigationStrategy;
 import net.lop223.utils.player_engine.IAudioPlaybackControl;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -15,7 +18,7 @@ import java.util.Optional;
  * [SOLID: ISP/DIP]
  * Залежить лише від інтерфейсу контролю відтворення
  */
-class PlaybackQueueService implements IPlaybackQueueService {
+public class PlaybackQueueService implements IPlaybackQueueService {
     private final IAudioPlaybackControl audioControl;
     private QueueNavigationStrategy navigationStrategy;
     private Playlist activePlaylist;
@@ -77,5 +80,21 @@ class PlaybackQueueService implements IPlaybackQueueService {
 
     private void loadCurrentTrack() {
         getCurrentTrack().ifPresent(track -> audioControl.loadSource(track.getSourcePath()));
+    }
+
+    public PlaybackMemento createMemento() {
+        return new PlaybackMemento(activePlaylist, currentIndex);
+    }
+
+    public void restoreMemento(PlaybackMemento memento) {
+        Objects.requireNonNull(memento);
+
+        if (audioControl.getState() == PlaybackState.PLAYING) {
+            audioControl.stop();
+        }
+
+        this.activePlaylist = memento.playlist();
+        this.currentIndex = memento.currentIndex();
+        loadCurrentTrack();
     }
 }

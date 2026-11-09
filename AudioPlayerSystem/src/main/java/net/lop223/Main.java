@@ -13,6 +13,7 @@ import net.lop223.importer.AudioFormatHandler;
 import net.lop223.importer.AudioImportHandler;
 import net.lop223.importer.UnsupportedAudioFormatHandler;
 import net.lop223.mediator.PlaybackMediator;
+import net.lop223.memento.PlaybackHistory;
 import net.lop223.proxy.LazyMediaPlayerEngineProxy;
 import net.lop223.utils.AudioDevice;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
@@ -49,6 +50,8 @@ public class Main {
 
         IPlaylistRepository repository = new InMemoryPlaylistRepository();
         PlaybackQueueService queueService = new PlaybackQueueService(audioEngine);
+        PlaybackHistory playbackHistory = new PlaybackHistory(queueService);
+        playbackHistory.save();
 
         AudioMetadataReaderFactory flacFactory = new FlacMetadataReaderFactory();
 
@@ -69,6 +72,14 @@ public class Main {
                 repository,
                 commandInvoker
         );
+        playbackMediator.addObserver(event -> {
+            String title = event.track()
+                    .map(Track::getTitle)
+                    .orElse("Трек не вибрано");
+
+            System.out.println(
+                    "[Observer] Стан: " + event.state() + ", трек: " + title);
+        });
         PlayerController controller =
                 new PlayerController(playbackMediator, importHandler);
 
