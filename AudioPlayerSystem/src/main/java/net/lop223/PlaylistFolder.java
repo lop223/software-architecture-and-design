@@ -1,5 +1,7 @@
 package net.lop223;
 
+import net.lop223.visitor.PlaylistLibraryVisitor;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,5 +71,10 @@ public class PlaylistFolder implements PlaylistLibraryItem {
             }
         }
         return false;
+    }
+
+    @Override
+    public <T> T accept(PlaylistLibraryVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

@@ -1,6 +1,7 @@
 package net.lop223;
 
 import net.lop223.utils.prototype.Prototype;
+import net.lop223.visitor.PlaylistLibraryVisitor;
 
 import java.time.Duration;
 import java.util.*;
@@ -58,5 +59,10 @@ public class Playlist implements Prototype<Playlist>, PlaylistLibraryItem, Itera
             total = total.plus(track.getDuration());
         }
         return total;
+    }
+
+    @Override
+    public <T> T accept(PlaylistLibraryVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

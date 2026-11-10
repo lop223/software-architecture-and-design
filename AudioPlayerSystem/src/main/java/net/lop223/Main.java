@@ -19,6 +19,7 @@ import net.lop223.utils.AudioDevice;
 import net.lop223.utils.player_engine.IMediaPlayerEngine;
 import net.lop223.utils.IMetadataReader;
 import net.lop223.utils.IPlaylistRepository;
+import net.lop223.visitor.PlaylistLibraryReportVisitor;
 
 import java.time.Duration;
 import java.util.List;
@@ -136,6 +137,9 @@ public class Main {
         library.add(workoutPlaylist);
         System.out.printf("   Плейлистів/папок у бібліотеці: %d, треків у дереві: %d, загальна тривалість: %s\n",
                 library.getItems().size(), library.getTracks().size(), library.calculateTotalDuration());
+
+        String report = library.accept(new PlaylistLibraryReportVisitor());
+        System.out.println(report);
 
         // 8. Відтворення та робота Object Pool у рушії
         System.out.println("\n7. [Object Pool] Відтворення плейліста через аудіорушій (Pool з'єднань):");
