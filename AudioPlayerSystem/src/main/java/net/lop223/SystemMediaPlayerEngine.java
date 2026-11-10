@@ -2,6 +2,10 @@ package net.lop223;
 
 import net.lop223.bridge.AudioPlaybackBackend;
 import net.lop223.bridge.WindowsAudioBackend;
+import net.lop223.state.MediaPlayerState;
+import net.lop223.state.PausedState;
+import net.lop223.state.PlayingState;
+import net.lop223.state.StoppedState;
 import net.lop223.stream_connection.AudioConnectionPool;
 import net.lop223.stream_connection.AudioStreamConnection;
 import net.lop223.utils.AudioDevice;
@@ -21,7 +25,7 @@ import java.util.List;
  */
 public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
     private final AudioPlaybackBackend backend;
-    private PlaybackState state = PlaybackState.STOPPED;
+    private MediaPlayerState currentState = StoppedState.INSTANCE;
     private float volume = 0.8f;
     private AudioDevice currentDevice;
     private String loadedSourcePath;
@@ -43,7 +47,7 @@ public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
     }
 
     @Override
-    public PlaybackState getState() { return state; }
+    public PlaybackState getState() { return currentState.getStatus(); }
 
     @Override
     public float getVolume() { return volume; }
@@ -90,35 +94,56 @@ public class SystemMediaPlayerEngine implements IMediaPlayerEngine {
 
     @Override
     public void play() {
-        if (loadedSourcePath == null) {
-            System.out.println("[AudioEngine WARN] No source loaded!");
-            return;
-        }
-        this.state = PlaybackState.PLAYING;
-        backend.play();
-        System.out.println("[AudioEngine] PLAYING on '" + currentDevice.name() + "' [Stream: " + currentConnection.getConnectionId() + "]");
+        currentState.play(this);
     }
 
     @Override
     public void pause() {
-        this.state = PlaybackState.PAUSED;
-        backend.pause();
-        System.out.println("[STUB] AudioEngine.pause() -> PAUSE");
+        currentState.pause(this);
     }
 
     @Override
     public void stop() {
-        this.state = PlaybackState.STOPPED;
-        backend.stop();
-        if (currentConnection != null) {
-            connectionPool.release(currentConnection);
-            currentConnection = null;
-        }
-        System.out.println("[AudioEngine] STOPPED (Connection released back to pool)");
+        currentState.stop(this);
     }
 
     @Override
     public void seek(Duration position) {
         System.out.println("[STUB] AudioEngine.seek() -> Seek to position: " + position.toSeconds() + " sec");
+    }
+
+    public void startPlayback() {
+        if (loadedSourcePath == null) {
+            System.out.println("[AudioEngine WARN] No source loaded!");
+            return;
+        }
+
+        if (currentConnection == null) {
+            currentConnection = connectionPool.acquire();
+            currentConnection.bindStream(loadedSourcePath);
+        }
+
+        backend.play();
+        currentState = PlayingState.INSTANCE;
+        System.out.println("[AudioEngine] PLAYING on '" + currentDevice.name()
+                + "' [Stream: " + currentConnection.getConnectionId() + "]");
+    }
+
+    public void pausePlayback() {
+        backend.pause();
+        currentState = PausedState.INSTANCE;
+        System.out.println("[AudioEngine] PAUSED");
+    }
+
+    public void stopPlayback() {
+        backend.stop();
+
+        if (currentConnection != null) {
+            connectionPool.release(currentConnection);
+            currentConnection = null;
+        }
+
+        currentState = StoppedState.INSTANCE;
+        System.out.println("[AudioEngine] STOPPED (Connection released back to pool)");
     }
 }

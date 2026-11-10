@@ -33,7 +33,6 @@ public class PlaybackQueueService implements IPlaybackQueueService {
         this.navigationStrategy = strategy;
     }
 
-    // [OCP]: можливість змінювати стратегію на льоту (наприклад, увімкнути Shuffle)
     public void setNavigationStrategy(QueueNavigationStrategy navigationStrategy) {
         this.navigationStrategy = navigationStrategy;
     }
